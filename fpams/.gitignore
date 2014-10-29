@@ -1,5 +1,0 @@
-.DS_Store
-log/*.log
-tmp/**
-node_modules/
-.sass-cache
