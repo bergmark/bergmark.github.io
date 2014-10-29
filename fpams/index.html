@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+
+    <title>Fay @ FP AMS</title>
+
+    <meta name="description" content="Fay - A subset of Haskell that compiles to JavaScript">
+    <meta name="author" content="Adam Bergmark">
+
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="css/reveal.min.css">
+    <link rel="stylesheet" href="css/theme/beige.css" id="theme">
+
+    <!-- For syntax highlighting -->
+    <link rel="stylesheet" href="lib/css/zenburn.css">
+
+    <!-- If the query includes 'print-pdf', use the PDF print sheet -->
+    <script>
+      document.write( '<link rel="stylesheet" href="css/print/' + ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) + '.css" type="text/css" media="print">' );
+    </script>
+
+    <!--[if lt IE 9]>
+    <script src="lib/js/html5shiv.js"></script>
+    <![endif]-->
+<style>
+
+.code { font-size: 18px; margin-top: 20px; padding-bottom: 10px; }
+.code code { padding-bottom: 20px !important; padding-left: 20px !important; }
+
+</style>
+  </head>
+
+  <body>
+
+    <div class="reveal">
+
+      <!-- Any section element inside of this container is displayed as a slide -->
+      <div class="slides">
+
+
+
+<section>
+  <h1>Fay</h1>
+  <h3>Compiling Haskell to JavaScript</h3>
+  <p>
+    <small>Adam Bergmark / FP AMS 2014-10-14 / <a href="http://twitter.com/adambergmark">@adambergmark</a></small>
+  </p>
+  <p>
+    <small><a href="http://www.github.com/faylang/fay/wiki">www.github.com/faylang/fay/wiki</a></small>
+  </p>
+</section>
+
+<section>
+  <h2>Me!</h2>
+  <ul>
+    <li>I'm Adam Bergmark
+    <li>Silk - <a href="http://www.silk.co">www.silk.co</a> - <a href="http://jobs.silk.co">jobs.silk.co</a>
+  </ul>
+</section>
+
+<section>
+  <h2>Fay Stats</h2>
+  <ul>
+    <li class="fragment">Fay 0.1 - by <a href="https://twitter.com/christopherdone">Chris Done</a> - July 2012
+    <li class="fragment">7000 Hackage downloads
+    <li class="fragment">900 github stars
+  </ul>
+</section>
+
+<section>
+  <h2>Hello World!</h2>
+
+<div class="fragment"><a href="https://www.haskell.org/platform/">Install Haskell + Cabal</a></code>
+
+<pre class="code fragment"><code>
+$ cabal install fay
+$ cabal install fay-base fay-jquery
+</code></pre>
+
+<pre class="code fragment"><code>
+$ cat Main.hs
+module Main where
+
+import Fay.JQuery
+
+main :: Fay ()
+main = do
+  print "Here we go!"
+  ajax "/get-time" $ \t -> do
+    body <- select "body"
+    append body ("The time is " ++ t)
+</code></pre>
+
+<pre class="code fragment"><code>
+$ fay Main.hs --package=fay-jquery --html-wrapper
+$ ls
+Main.hs Main.html Main.js
+$ open Main.html
+</code></pre>
+
+</section>
+
+<section>
+  <section>
+    <h2>Some Fay Packages</h2>
+    <ul>
+      <li>fay-base
+      <li>fay-text
+      <li>fay-dom
+      <li>fay-jquery
+      <li>Cinder, fay-hsx
+    </ul>
+  </section>
+  <section>
+    <h2>GHC Integration</h2>
+    <ul>
+      <li>fay (the API)
+      <li>snaplet-fay
+      <li>happstack-fay
+      <li>yesod-fay
+      <li>fay-builder
+  </section>
+</section>
+
+<section>
+  <h2>High Level Goals & features</h2>
+  <ul>
+    <li class=fragment>Proper subset of Haskell
+    <li class=fragment>Statically typed, pure, lazy
+    <li class=fragment>Reuse JavaScript types
+    <li class=fragment>Small and easy to understand output
+    <li class=fragment>Compressable
+    <li class=fragment>Reuse JavaScript libraries
+    <li class=fragment>Type safe client<->server communication
+    <li class=fragment>Package management
+    <li class=fragment>Fay code as JS libraries
+    <li class=fragment>Support by the major web frameworks
+    <li class=fragment>Don't support all of Haskell
+  </ul>
+</section>
+
+<section>
+  <h2>Alternatives</h2>
+  <ul>
+    <li class=fragment>JavaScript :((
+    <li class=fragment>CoffeScript :(
+    <li class=fragment>TypeScript :|
+    <li class=fragment>GHCJS :)
+    <li class=fragment>Idris, PureScript :)
+    <li class=fragment>But Fay is better!
+  </ul>
+</section>
+
+<section>
+  <section>
+    <h2>Tooling & Architecture</h2>
+    <ul>
+      <li>Initial setup
+      <li>haskell-src-exts
+      <li>haskell-suite
+      <li>Custom JS AST
+    </ul>
+  </section>
+  <section>
+    <h2>Compiler passes</h2>
+    <ol>
+      <li>Parse import/package directives
+      <li>Type checking (GHC)
+      <li>Parsing (haskell-src-exts)
+      <li>Desugaring
+      <li>Check for imports
+      <li>Name Resolution (haskell-names)
+      <li>Preprocessing
+      <li>Code generation (to custom JS AST)
+      <li>Optimizations on JS AST
+      <li>Printing
+      <li>Compression + Optimization (Google Closure)
+    </ol>
+  </section>
+</section>
+
+<section>
+  <section>
+    <h2>FFI</h2>
+    <ul>
+      <li>Simple to use
+      <li>Automatic conversions
+      <li>Can transcode functions and Fay actions
+  </section>
+  <section>
+    <h2>Hangeul (in 해스켈)</h2>
+    <iframe src="fay-translit/FayTest.html" width="750" height="500" style="margin:0;overflow:hidden;border:1px solid #CCC;border-width:1px 1px 0;margin-bottom:5px" allowfullscreen> </iframe>
+  </section>
+  <section>
+    <h2>FFI</h2>
+
+<pre class="code"><code>
+ffi :: String -- ^ JavaScript expression
+    -> a      -- ^ Return value
+</code></pre>
+
+<pre class="code fragment"><code>
+add :: Double -> Double -> Double
+add = ffi "%1 + %2"
+</code></pre>
+
+<pre class="code fragment"><code>
+add2 :: Double -> Double -> Double
+add2 = ffi "(function () { return %1 + %2; })()"
+</code></pre>
+
+<pre class="code fragment"><code>
+add3 :: Double -> Double -> Double
+add3 = ffi "(function (a,b) { return a + b; }(%*)"
+</code></pre>
+
+<pre class="code fragment"><code>
+add4 = foo (ffi "%1 + %2" :: Double -> Double -> Double)
+</code></pre>
+
+  </section>
+  <section>
+
+<pre class="code"><code>
+add :: Double -> Double -> Double
+add = ffi "%1 + %2"
+</code></pre>
+
+<pre class="code"><code>
+Add.add = function ($p1) {
+  return function ($p2) {
+    return new Fay$$$(function () {
+      return Fay$$jsToFay_double
+               ( Fay$$fayToJs_double($p1)
+               + Fay$$fayToJs_double($p2)
+               );
+    });
+  };
+};
+</code></pre>
+
+<pre class="code fragment"><code>
+// Why not?
+Add.add = function (a,b) { return a + b; };
+</code></pre>
+
+</section>
+<section>
+
+<pre class="code"><code>
+// Why not?
+Add.add = function (a,b) { return a + b; };
+</code></pre>
+
+<pre class="code"><code>
+// Partial application
+y = let f = add 1 in f 2 * f 3
+</code></pre>
+
+<pre class="code fragment"><code>
+// Reusing results
+x = let f = add 1 2 in f * f
+</code></pre>
+
+<pre class="code fragment"><code>
+// Handling thunks
+z thunk = f thunk
+</code></pre>
+
+</section>
+
+  <section>
+    <h2>Ptr</h2>
+    <p>Disables transcoding
+
+<pre class="code"><code>
+type Ptr a = a
+</code></pre>
+
+<pre class="code"><code>
+add2 :: Ptr Double -> Ptr Double -> Ptr Double
+add2 = ffi "%1 + %2"
+</code></pre>
+
+<pre class="code"><code>
+Add2.add2 = function ($p1) {
+  return function ($p2) {
+    return new Fay$$$(function () {
+      return $p1 + $p2;
+    });
+  };
+};
+</code></pre>
+
+  </section>
+  <section>
+    <h2>Type variables</h2>
+    <p>Are not transcoded</p>
+
+<pre class="code"><code>
+id :: a -> a
+id = ffi "%1"
+</code></pre>
+
+<pre class="code"><code>
+Id.id = function($p1){
+  return new Fay$$$(function(){
+    return Fay$$jsToFay(["unknown"],Fay$$fayToJs(["unknown"],$p1));
+  });
+};
+</code></pre>
+
+  </section>
+  <section>
+    <h2>Automatic</h2>
+    <p>Tries to transcode everything
+
+<pre class="code"><code>
+type Automatic a = a
+</code></pre>
+
+<pre class="code"><code>
+data Psn = Person { name :: Text }
+
+decode :: Automatic a
+decode = ffi "{ instance : 'Person', name : 'Adam' }"
+</code></pre>
+
+<pre class="code"><code>
+Decode.decode = new Fay$$$(function(){
+  return Fay$$jsToFay( ["automatic"]
+                     , { instance : 'Person', name : 'Adam' }
+                     );
+});
+</code></pre>
+
+  </section>
+  <section>
+    <h2>Defined and Nullable</h2>
+    <ul>
+      <li>Use for values that can be null/undefined
+      <li>Undefined object properties are removed when encoding
+    </ul>
+
+<pre class="code"><code>
+data Nullable a  = Nullable a | Null
+--   Nullable 1 <=> 1
+--   Null       <=> null
+
+-- Why not reuse data Maybe = Just a | Nothing?
+
+data Defined  a    = Defined a  | Undefined
+--  R (Defined 1) <=> { instance : 'R', val : 1 }
+--  R Undefined   <=> { instance : 'R' }
+</code></pre>
+
+  </section>
+  <section>
+    <h2>Advanced</h2>
+
+<pre class="code"><code>
+ajax :: Text
+     -> (Automatic b -> Fay ())
+     -> (JQXHR -> Defined Text -> Defined Text -> Fay ())
+     -> Fay ()
+ajax ur succ err = ajax_ $ defaultAjaxSettings
+  { success = Defined succ
+  , error   = Defined err
+  , url     = Defined ur
+  }
+</code></pre>
+
+  </section>
+
+  <section>
+    <h2>Reverse FFI</h2>
+    <ul>
+      <li>Call Fay from JavaScript
+    </ul>
+
+<pre class="code"><code>
+module Str where
+
+concat :: String -> String -> String
+concat = ffi "%1 + %2"
+</code></pre>
+
+    <ul>
+      <li class="fragment">Compile with <code class="code">fay --strict Str Str.hs</code>
+    </ul>
+
+<pre class="code fragment"><code>
+Strict.Str.concat = Fay$$fayToJs(['automatic'], Str.concat);
+
+// Call with
+Strict.Str.concat("a","b")
+Strict.Str.concat("a")("b")
+</code></pre>
+
+  </section>
+  <section>
+    <h2>Hangeul again</h2>
+    <iframe src="fay-translit/JsTest.html" width="750" height="500" style="margin:0;overflow:hidden;border:1px solid #CCC;border-width:1px 1px 0;margin-bottom:5px" allowfullscreen> </iframe>
+  </section>
+</section>
+
+<section>
+  <section>
+    <h2>Type Classes?</h2>
+    <ul>
+      <li class="fragment">Currently only empty class declarations
+    </ul>
+<pre class="code fragment"><code>
+class Selectable a
+instance Selectable JQuery
+instance Selectable Element
+instance Selectable Text
+
+select :: Selectable a => a -> Fay JQuery
+select = ffi "jQuery(%1)"
+</code></pre>
+
+    <ul>
+      <li class="fragment">Options: GHC Core, GHC API, haskell-type-exts
+      <li class="fragment">Dynamic dispatch
+    </ul>
+
+<pre class="code fragment"><code>
+class Show a where
+  show :: a -> String
+
+f a = show a
+
+=> f = function (a) { return a.show(a); };
+</code></pre>
+
+
+  </section>
+<section>
+<pre class="code"><code>
+class Read a where
+  show :: String -> a
+
+g a = read a
+
+=> ???
+</code></pre>
+</section>
+
+</section><section>
+
+    <h2>Type Safe Client<->Server Communication</h2>
+
+<pre class="code"><code>
+
+data Returns a = Returns
+
+data Command
+  = CheckModule String (Returns CheckResult)
+  | GetModule   String (Returns ModuleLoad)
+
+call :: (Returns (Automatic a) -> Command)
+     -> (Automatic a -> Fay ())
+     -> Fay ()
+call f g = ajaxCommand (f Returns) g
+
+main = call (CheckModule s) successHandler
+
+</code></pre>
+
+</section><section>
+  <h2>Package Managment</h2>
+  <ul>
+    <li>Cabal & Hackage
+    <li>fay --package fay-text Awesome.hs
+    <li>Cabal data-files
+    <li>haskell-packages (Cabal 1.20)
+  </ul>
+
+</section>
+
+<section>
+  <h2>Conclusion</h2>
+  <ul>
+    <li>Using libraries instead of the GHC API made it easy, until...
+    <li>Fay is actively maintained
+    <li>Fay is used in production
+    <li>Wishlist: Type classes, More source maps, haskell-packages integration
+  </ul>
+</section><section>
+  <h2>Questions</h2>
+  <p>
+    <small>Adam Bergmark / FP AMS 2014-10-16 / <a href="http://twitter.com/adambergmark">@adambergmark</a></small>
+  </p>
+  <ul>
+    <li>Goals & Features
+    <li>Alternative Compilers
+    <li>Tooling & Architecture
+    <li>FFI
+    <li>Type Classes
+    <li>Client<->Server Communication
+    <li>Package Management
+    <li>Output
+  </ul>
+</section>
+
+
+      </div>
+
+    </div>
+
+    <script src="lib/js/head.min.js"></script>
+    <script src="js/reveal.min.js"></script>
+
+    <script>
+
+      // Full list of configuration options available here:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+
+        theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+        transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+        // Optional libraries used to extend on reveal.js
+        dependencies: [
+          { src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+          { src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+          { src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+          { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+          { src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+          { src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+          // { src: 'plugin/search/search.js', async: true, condition: function() { return !!document.body.classList; } }
+          // { src: 'plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+        ]
+      });
+
+    </script>
+
+  </body>
+</html>
